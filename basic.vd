@@ -1,0 +1,1 @@
+usize x: usize y => x << y;
