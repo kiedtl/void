@@ -135,3 +135,25 @@ the `include` keyword can be thought of as a shortcut to
 `foreign`: it causes the compiler to go through the specified
 file at treat each identifier as if it was declared with
 `foreign`.
+
+## loops
+The only loop construct is `while`:
+```
+while: <expressions> =>
+[; OR end]
+```
+e.g.
+```
+while: usize i := 0; i -lt 10; inc(i) =>
+	# do stuff
+end
+
+usize i := 0;
+while: i -lt 100 =>
+	# do stuff
+	blah();
+
+	# increment
+	inc(i);
+end
+```
