@@ -1,7 +1,7 @@
 #ifndef TOKENS_H
 #define TOKENS_H
 
-enum token_type {
+enum {
 	/* conditional/loop keywords */
 	TOK_COND_IF,
 	TOK_COND_ELIF,
@@ -84,12 +84,13 @@ enum token_type {
 	TOK_ASSIGN_BW_OR,
 	TOK_ASSIGN_BW_XOR,
 	TOK_ASSIGN_BW_NOT,
-}
 
-typedef struct token {
-	enum token_type type;
-	char *data;
-	struct token *next;
-} token;
+	/* parenthesis */
+	TOK_PAREN_OPEN,
+	TOK_PAREN_CLOSE,
+
+	/* temporary */
+	TOK_TMP_WRITE,
+}
 
 #endif

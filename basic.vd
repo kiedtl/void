@@ -1,1 +1,2 @@
 usize x: usize y => x << y;
+write(x(24));
