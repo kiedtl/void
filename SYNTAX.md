@@ -8,15 +8,17 @@
 e.g.
 ```
 usize main: usize argc, char **argv =>
-	# <snip>
+	# return 0
+	:0
 ;
 
 usize another_function: usize x, usize y =>
 	# <snip>
 ;
 
-usize yet_another =>
-	# <snip>
+_ yet_another =>
+	# return null, since return type is void or "_"
+	:_
 end
 ```
 
@@ -53,9 +55,9 @@ Strings and booleans are defined in the standard library.
 ## conditionals
 **if/elif/else**:
 ```
-if (<expression>) =>
+if: <expression> =>
 	# <snip>
-; elif (<expressions>) =>
+; elif: <expressions> =>
 	# <snip>
 ; else =>
 	# <snip>
@@ -64,14 +66,14 @@ if (<expression>) =>
 
 e.g.
 ```
-if (x == 10) =>
+if: x == 10 =>
 	write("x == 10\n");
 end
 ```
 
 **switch**:
 ```
-switch (<identifier>) =>
+switch: <identifier> =>
 	<value> => <expression>;
 	<value> => <expression>;
 	<value> => <expression1>
@@ -81,7 +83,7 @@ end
 ```
 e.g.
 ```
-switch (x) =>
+switch: x =>
 	1 => write("x == 1\n");
 	2 => write("x == 2\n");
 	3 => write("x == 3\n");
@@ -157,3 +159,24 @@ while: i -lt 100 =>
 	inc(i);
 end
 ```
+
+## return types and \_/void
+- `void` is strictly a datatype -- a generic datatype, as in C.
+- `_` is NULL.
+
+NOTE: when the return type for a function is `_`/NULL, the
+return statement may be omitted.
+
+To return a type, prefix it will `:`:
+```
+_ puts: u32 *data =>
+	write(data);
+	write('\n');
+end
+
+usize main: usize argc, char **argv =>
+	puts("Hello, world!");
+	:0
+end
+```
+

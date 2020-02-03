@@ -6,9 +6,6 @@ foreign usize math_mul: usize x, usize y;
 
 # note that all variables are functions
 usize main: usize argc, u8 *argv =>
-	# this is a comment
-	# this is another comment
-
 	usize x => 5;
 
 	usize sqrt: usize x => math_mul(x, x);
@@ -16,6 +13,6 @@ usize main: usize argc, u8 *argv =>
 
 	write(stdout, "x² = %i", y);
 
-	# return value implicitly
-	0
-;
+	# return value
+	:0
+end
