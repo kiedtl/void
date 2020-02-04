@@ -1,6 +1,6 @@
 %{
 #include <stdio.h>
-#include "parse.tab.h"
+#include "y.tab.h"
 
 #define SAVE_STR     yylval = yytext;
 #define SAVE_TOK(t)  yylval.token = t;

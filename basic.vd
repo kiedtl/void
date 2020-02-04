@@ -1,5 +1,4 @@
-usize x: usize y =>
-	@(x << y)
+usize
+main: usize i =>
+	@0
 end
-
-write(x(24));

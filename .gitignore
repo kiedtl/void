@@ -1,4 +1,9 @@
 **/*.*.swp
 
+void
+a.out
+
 *.o
 lex.c
+y.tab.h
+y.tab.c

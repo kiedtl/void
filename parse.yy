@@ -1,9 +1,48 @@
+%{
+#include <stdio.h>
+#include <stdlib.h>
+
+extern FILE *yyin;
+extern char yytext[];
+
+void
+yyerror(const char *s)
+{
+	fflush(stdout);
+	fprintf(stderr, "\nerror: %s\n", s);
+}
+
+int
+yywrap(void)
+{
+	return 1;
+}
+
+int
+main(int argc, char **argv)
+{
+	if (argc < 2) {
+		yyin = stdin;
+	} else {
+		yyin = fopen(argv[1], "r");
+	}
+
+	if (yyin == NULL) {
+		fprintf(stderr, "error: '%s': couldn't open: ", argv[0]);
+		perror(NULL);
+		exit(1);
+	}
+
+	yyparse();
+}
+%}
+
 %token TOK_TMP_WRITE
 %token TOK_IDENT TOK_INT_LIT TOK_FLOAT_LIT TOK_CHAR_LIT TOK_STRING_LIT
 %token TOK_COLON TOK_BLK_START TOK_SEMICOLON TOK_BLK_END
 %token TOK_PAREN_OPEN TOK_PAREN_CLOSE
 %token TOK_OP
-%token TOK_NORETURN
+%token TOK_NORETURN TOK_RETURN
 
 %%
 
@@ -16,7 +55,7 @@ value_lit:
 
 expression:
 	  TOK_IDENT
-	  | single_value_lit
+	  | value_lit
 	  | value_lit TOK_OP value_lit
 	  | TOK_PAREN_OPEN expression TOK_PAREN_CLOSE
 	  ;
@@ -44,7 +83,7 @@ statement_list:
 
 block:
      TOK_BLK_START statement_list TOK_BLK_END
-     TOK_BLK_START statement_list TOK_SEMICOLON
+     | TOK_BLK_START statement_list TOK_SEMICOLON
      ;
 
 fn_type_specifiers:
@@ -59,6 +98,7 @@ fn_decl_arg:
 fn_decl_arg_list:
 	fn_decl_arg
 	| fn_decl_arg_list ','
+	;
 
 fn_decl:
        fn_type_specifiers TOK_IDENT
@@ -66,5 +106,9 @@ fn_decl:
        ;
 
 fn_call:
-       TOK_IDENT TOK_PAREN_OPEN expressions TOK_PAREN_CLOSE
+       TOK_IDENT TOK_PAREN_OPEN expression TOK_PAREN_CLOSE
        | TOK_IDENT TOK_PAREN_OPEN TOK_PAREN_CLOSE
+       ;
+
+%%
+
