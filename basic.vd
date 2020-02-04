@@ -1,2 +1,5 @@
-usize x: usize y => x << y;
+usize x: usize y =>
+	@(x << y)
+end
+
 write(x(24));

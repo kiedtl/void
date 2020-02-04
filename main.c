@@ -21,13 +21,8 @@ main(int argc, char **argv)
 		}
 	}
 
-	struct token *tokens = malloc(255 * sizeof(struct token*));
-	lex(f, tokens);
-
-	while (*token->next != NULL) {
-		fprintf(stdout, "found %s of value %s\n",
-				name(token->type), data);
-	}
+	yyin = f;
+	yyparse();
 
 	return 0;
 }
