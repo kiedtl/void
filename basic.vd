@@ -1,4 +1,4 @@
 usize
-main: usize i =>
+main: _ =>
 	@0
 end
