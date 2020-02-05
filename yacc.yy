@@ -21,11 +21,7 @@ yywrap(void)
 int
 main(int argc, char **argv)
 {
-	if (argc < 2) {
-		yyin = stdin;
-	} else {
-		yyin = fopen(argv[1], "r");
-	}
+	yyin = stdin;
 
 	if (yyin == NULL) {
 		fprintf(stderr, "error: '%s': couldn't open: ", argv[0]);
@@ -38,13 +34,18 @@ main(int argc, char **argv)
 %}
 
 %token TOK_TMP_WRITE
-%token TOK_IDENT TOK_INT_LIT TOK_FLOAT_LIT TOK_CHAR_LIT TOK_STRING_LIT
+%token TOK_IDENT TOK_INT_LIT TOK_FLOAT_LIT TOK_CHAR_LIT TOK_STRING_LIT TOK_NULL
 %token TOK_COLON TOK_BLK_START TOK_SEMICOLON TOK_BLK_END
 %token TOK_PAREN_OPEN TOK_PAREN_CLOSE
 %token TOK_OP
 %token TOK_NORETURN TOK_RETURN
 
+%start program
 %%
+
+program: /* emtpy */
+       | fn_decl
+       ;
 
 value_lit:
 	 TOK_INT_LIT
