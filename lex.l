@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "y.tab.h"
 
-#define SAVE_STR     yylval = yytext;
+#define SAVE_STR     yylval.string = yytext;
 #define TOK(t)       yylval.token = t;
 #define ERR(fmt)     fprintf(stderr, fmt, yytext);
 %}

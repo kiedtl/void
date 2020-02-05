@@ -33,12 +33,21 @@ main(int argc, char **argv)
 }
 %}
 
+/* temporary: TOK_TMP_WRITE = write syscall */
 %token TOK_TMP_WRITE
+
 %token TOK_IDENT TOK_INT_LIT TOK_FLOAT_LIT TOK_CHAR_LIT TOK_STRING_LIT TOK_NULL
 %token TOK_COLON TOK_BLK_START TOK_SEMICOLON TOK_BLK_END
 %token TOK_PAREN_OPEN TOK_PAREN_CLOSE
 %token TOK_OP
 %token TOK_NORETURN TOK_RETURN
+
+%union {
+	int token;
+	char *string;
+	int i64;
+	float f64;
+}
 
 %start program
 %%
@@ -102,8 +111,8 @@ fn_decl_arg_list:
 	;
 
 fn_decl:
-       fn_type_specifiers TOK_IDENT
-       | fn_type_specifiers TOK_IDENT TOK_COLON fn_decl_arg_list
+       fn_type_specifiers TOK_IDENT block
+       | fn_type_specifiers TOK_IDENT TOK_COLON fn_decl_arg_list block
        ;
 
 fn_call:
