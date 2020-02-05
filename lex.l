@@ -34,6 +34,4 @@
 
 '<<'                     SAVE_STR; return TOK(TOK_OP);
 
-.                        ERR("error: '%s': unknown token.\n"); yyterminate();
-
 %%
