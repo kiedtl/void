@@ -1,4 +1,3 @@
-usize
-main: _ =>
-	@0
+usize main =>
+	ret 0;
 end
