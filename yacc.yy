@@ -36,11 +36,22 @@ main(int argc, char **argv)
 /* temporary: TOK_TMP_WRITE = write syscall */
 %token TOK_TMP_WRITE
 
-%token TOK_IDENT TOK_INT_LIT TOK_FLOAT_LIT TOK_CHAR_LIT TOK_STRING_LIT TOK_NULL
-%token TOK_COLON TOK_BLK_START TOK_SEMICOLON TOK_BLK_END
-%token TOK_PAREN_OPEN TOK_PAREN_CLOSE
-%token TOK_OP
-%token TOK_NORETURN TOK_RETURN
+%token TOK_IDENT         /* identifer */
+%token TOK_INT_LIT       /* integer literal */
+%token TOK_FLOAT_LIT     /* float literal */
+%token TOK_CHAR_LIT      /* character literal */
+%token TOK_STRING_LIT    /* string literal */
+%token TOK_NULL          /* the '_' (underscore) token */
+%token TOK_COLON         /* the ':' (colon) token */
+%token TOK_COMMA         /* the ',' (comma) token */
+%token TOK_BLK_START     /* the '=>' token */
+%token TOK_SEMICOLON     /* the ';' (semicolon) token */
+%token TOK_BLK_END       /* the 'end' token */
+%token TOK_PAREN_OPEN    /* the '(' token */
+%token TOK_PAREN_CLOSE   /* the ')' token */
+%token TOK_OP            /* operators */
+%token TOK_NORETURN      /* the '_Noreturn' token (as in C99) */
+%token TOK_RETURN        /* the '@' (at) token */
 
 %union {
 	int token;
@@ -49,10 +60,11 @@ main(int argc, char **argv)
 	float f64;
 }
 
+%define parse.error verbose
 %start program
 %%
 
-program: /* emtpy */
+program: /* empty */
        | fn_decl
        ;
 
@@ -67,17 +79,16 @@ expression:
 	  TOK_IDENT
 	  | value_lit
 	  | value_lit TOK_OP value_lit
-	  | TOK_PAREN_OPEN expression TOK_PAREN_CLOSE
+	  | '(' expression ')'
 	  ;
 
 expression_statement:
-		    TOK_SEMICOLON
-		    | expression TOK_SEMICOLON
+		    ';'
+		    | expression ';'
 		    ;
 
 return_statement:
-		TOK_RETURN TOK_SEMICOLON
-		| TOK_RETURN expression TOK_SEMICOLON
+		TOK_RETURN expression ';'
 		;
 
 statement:
@@ -93,7 +104,7 @@ statement_list:
 
 block:
      TOK_BLK_START statement_list TOK_BLK_END
-     | TOK_BLK_START statement_list TOK_SEMICOLON
+     | TOK_BLK_START statement_list ';'
      ;
 
 fn_type_specifiers:
