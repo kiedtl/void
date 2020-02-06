@@ -25,7 +25,7 @@ lex.c: lex.l y.tab.h
 clean:
 	rm -f $(NAME) $(OBJ) $(SRC)
 
-test: ./$(NAME)
+test:
 	./void < basic.vd
 
 .PHONY: all clean test
