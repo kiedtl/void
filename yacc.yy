@@ -4,33 +4,8 @@
 
 extern FILE *yyin;
 extern char yytext[];
+void yyerror(const char *s);
 
-void
-yyerror(const char *s)
-{
-	fflush(stdout);
-	fprintf(stderr, "\nerror: %s\n", s);
-}
-
-int
-yywrap(void)
-{
-	return 1;
-}
-
-int
-main(int argc, char **argv)
-{
-	yyin = stdin;
-
-	if (yyin == NULL) {
-		fprintf(stderr, "error: '%s': couldn't open: ", argv[0]);
-		perror(NULL);
-		exit(1);
-	}
-
-	yyparse();
-}
 %}
 
 /* temporary: TOK_TMP_WRITE = write syscall */
@@ -79,17 +54,15 @@ expression:
 	  TOK_IDENT
 	  | value_lit
 	  | value_lit TOK_OP value_lit
-	  | '(' expression ')'
+	  | TOK_PAREN_OPEN expression TOK_PAREN_CLOSE
 	  ;
 
 expression_statement:
-		    ';'
-		    | expression ';'
+		    TOK_SEMICOLON
+		    | expression TOK_SEMICOLON
 		    ;
 
-return_statement:
-		TOK_RETURN expression ';'
-		;
+return_statement: TOK_RETURN TOK_INT_LIT TOK_SEMICOLON ;
 
 statement:
 	 expression_statement
@@ -104,7 +77,7 @@ statement_list:
 
 block:
      TOK_BLK_START statement_list TOK_BLK_END
-     | TOK_BLK_START statement_list ';'
+     | TOK_BLK_START statement_list TOK_SEMICOLON
      ;
 
 fn_type_specifiers:
@@ -118,7 +91,8 @@ fn_decl_arg:
 
 fn_decl_arg_list:
 	fn_decl_arg
-	| fn_decl_arg_list ','
+	| fn_decl_arg_list TOK_COMMA
+	| TOK_NULL
 	;
 
 fn_decl:
@@ -133,3 +107,28 @@ fn_call:
 
 %%
 
+void
+yyerror(const char *s)
+{
+	fprintf(stderr, "=> error: %s\n", s);
+}
+
+int
+yywrap(void)
+{
+	return 1;
+}
+
+int
+main(int argc, char **argv)
+{
+	yyin = stdin;
+
+	if (yyin == NULL) {
+		fprintf(stderr, "error: '%s': couldn't open: ", argv[0]);
+		perror(NULL);
+		exit(1);
+	}
+
+	yyparse();
+}

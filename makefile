@@ -1,7 +1,7 @@
 # NOTES: CFLAGS contains -Wno-implicit-function-declaration
 # to silence errors arising from compiling y.tab.c
 
-CC      = clang
+CC      = gcc
 CFLAGS  = -O0 -Wno-implicit-function-declaration
 LDFLAGS = -fuse-ld=gold
 
@@ -25,7 +25,7 @@ lex.c: lex.l y.tab.h
 clean:
 	rm -f $(NAME) $(OBJ) $(SRC)
 
-test: $(NAME)
+test: ./$(NAME)
 	./void < basic.vd
 
 .PHONY: all clean test
