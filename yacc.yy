@@ -4,90 +4,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-enum {
-	NString = 32,
-	NGlo = 256,
-	NVar = 512,
-	NStr = 256,
-};
-
-enum { /* minic types */
-	NIL,
-	INT,
-	LNG,
-	PTR,
-	FUN,
-};
+#include "common.h"
+#include "lex.h"
 
 #define IDIR(x) (((x) << 3) + PTR)
 #define FUNC(x) (((x) << 3) + FUN)
 #define DREF(x) ((x) >> 3)
 #define KIND(x) ((x) & 7)
 #define SIZE(x)                                    \
-	(x == NIL ? (die("void has no size"), 0) : \
+	(x == NIL ? (die("%d: void has no size", line), 0) : \
 	 x == INT ? 4 : 8)
 
 typedef struct Node Node;
 typedef struct Symb Symb;
 typedef struct Stmt Stmt;
 
-struct Symb {
-	enum {
-		Con,
-		Tmp,
-		Var,
-		Glo,
-	} t;
-	union {
-		int n;
-		char v[NString];
-	} u;
-	unsigned long ctyp;
-};
-
-struct Node {
-	char op;
-	union {
-		int n;
-		char v[NString];
-		Symb s;
-	} u;
-	Node *l, *r;
-};
-
-struct Stmt {
-	enum {
-		If,
-		While,
-		Seq,
-		Expr,
-		Break,
-		Ret,
-	} t;
-	void *p1, *p2, *p3;
-};
-
-int yylex(void), yyerror(char *);
+void yyerror(const char *s);
 Symb expr(Node *), lval(Node *);
 void bool(Node *, int, int);
 
 FILE *of;
-int line;
-int lbl, tmp, nglo;
-char *ini[NGlo];
+int lbl, tmp;
+
 struct {
 	char v[NString];
 	unsigned ctyp;
 	int glo;
 } varh[NVar];
-
-void
-die(char *s)
-{
-	fprintf(stderr, "error:%d: %s\n", line, s);
-	exit(1);
-}
 
 void *
 alloc(size_t s)
@@ -96,7 +39,7 @@ alloc(size_t s)
 
 	p = malloc(s);
 	if (!p)
-		die("out of memory");
+		die("%d: out of memory", line);
 	return p;
 }
 
@@ -136,10 +79,10 @@ varadd(char *v, int glo, unsigned ctyp)
 			return;
 		}
 		if (strcmp(varh[h].v, v) == 0)
-			die("double definition");
+			die("%d: double definition", line);
 		h = (h+1) % NVar;
 	} while(h != h0);
-	die("too many variables");
+	die("%d: too many variables", line);
 }
 
 Symb *
@@ -228,17 +171,17 @@ prom(int op, Symb *l, Symb *r)
 			r = t;
 		}
 		if (KIND(r->ctyp) == PTR)
-			die("pointers added");
+			die("%d: pointers added", line);
 		goto Scale;
 	}
 
 	if (op == '-') {
 		if (KIND(l->ctyp) != PTR)
-			die("pointer substracted from integer");
+			die("%d: pointer substracted from integer", line);
 		if (KIND(r->ctyp) != PTR)
 			goto Scale;
 		if (l->ctyp != r->ctyp)
-			die("non-homogeneous pointers in substraction");
+			die("%d: non-homogeneous pointers in substraction", line);
 		return LNG;
 	}
 
@@ -281,7 +224,7 @@ call(Node *n, Symb *sr)
 	if (varget(f)) {
 		ft = varget(f)->ctyp;
 		if (KIND(ft) != FUN)
-			die("invalid call");
+			die("%d: invalid call", line);
 	} else
 		ft = FUNC(INT);
 	sr->ctyp = DREF(ft);
@@ -366,7 +309,7 @@ expr(Node *n)
 	case '@':
 		s0 = expr(n->l);
 		if (KIND(s0.ctyp) != PTR)
-			die("dereference of a non-pointer");
+			die("%d: dereference of a non-pointer", line);
 		sr.ctyp = DREF(s0.ctyp);
 		load(sr, s0);
 		break;
@@ -385,7 +328,7 @@ expr(Node *n)
 		if (s0.ctyp != IDIR(NIL) || KIND(s1.ctyp) != PTR)
 		if (s1.ctyp != IDIR(NIL) || KIND(s0.ctyp) != PTR)
 		if (s1.ctyp != s0.ctyp)
-			die("invalid assignment");
+			die("%d: invalid assignment", line);
 		fprintf(of, "\tstore%c ", irtyp(s1.ctyp));
 		goto Args;
 
@@ -451,16 +394,16 @@ lval(Node *n)
 
 	switch (n->op) {
 	default:
-		die("invalid lvalue");
+		die("%d: invalid lvalue", line);
 	case 'V':
 		if (!varget(n->u.v))
-			die("undefined variable");
+			die("%d: undefined variable", line);
 		sr = *varget(n->u.v);
 		break;
 	case '@':
 		sr = expr(n->l);
 		if (KIND(sr.ctyp) != PTR)
-			die("dereference of a non-pointer");
+			die("%d: dereference of a non-pointer", line);
 		sr.ctyp = DREF(sr.ctyp);
 		break;
 	}
@@ -515,7 +458,7 @@ stmt(Stmt *s, int b)
 		return 1;
 	case Break:
 		if (b < 0)
-			die("break not in loop");
+			die("%d: break not in loop", line);
 		fprintf(of, "\tjmp @l%d\n", b);
 		return 1;
 	case Expr:
@@ -549,7 +492,7 @@ stmt(Stmt *s, int b)
 	}
 }
 
-Node *
+Node*
 mknode(char op, Node *l, Node *r)
 {
 	Node *n;
@@ -602,7 +545,7 @@ param(char *v, unsigned ctyp, Node *pl)
 	Node *n;
 
 	if (ctyp == NIL)
-		die("invalid void declaration");
+		die("%d: invalid void declaration", line);
 	n = mknode(0, 0, pl);
 	varadd(v, 0, ctyp);
 	strcpy(n->u.v, v);
@@ -648,7 +591,7 @@ mkfor(Node *ini, Node *tst, Node *inc, Stmt *s)
 %token PP MM LE GE SIZEOF
 
 %token TVOID TINT TLNG
-%token IF ELSE WHILE FOR BREAK RETURN
+%token IF ELSE FOR BREAK RETURN
 
 %right '='
 %left OR
@@ -675,9 +618,9 @@ fdcl: type IDENT '(' ')' ';'
 idcl: type IDENT ';'
 {
 	if ($1 == NIL)
-		die("invalid void declaration");
+		die("%d: invalid void declaration", line);
 	if (nglo == NGlo)
-		die("too many string literals");
+		die("%d: too many string literals", line);
 	ini[nglo] = alloc(sizeof "{ x 0 }");
 	sprintf(ini[nglo], "{ %c 0 }", irtyp($1));
 	varadd($2->u.v, nglo++, $1);
@@ -741,7 +684,7 @@ dcls: | dcls type IDENT ';'
 	char *v;
 
 	if ($2 == NIL)
-		die("invalid void declaration");
+		die("%d: invalid void declaration", line);
 	v = $3->u.v;
 	s = SIZE($2);
 	varadd(v, 0, $2);
@@ -759,7 +702,6 @@ stmt: ';'                            { $$ = 0; }
     | BREAK ';'                      { $$ = mkstmt(Break, 0, 0, 0); }
     | RETURN expr ';'                { $$ = mkstmt(Ret, $2, 0, 0); }
     | expr ';'                       { $$ = mkstmt(Expr, $1, 0, 0); }
-    | WHILE '(' expr ')' stmt        { $$ = mkstmt(While, $3, $5, 0); }
     | IF '(' expr ')' stmt ELSE stmt { $$ = mkstmt(If, $3, $5, $7); }
     | IF '(' expr ')' stmt           { $$ = mkstmt(If, $3, $5, 0); }
     | FOR '(' exp0 ';' exp0 ';' exp0 ')' stmt
@@ -818,134 +760,21 @@ arg1: expr          { $$ = mknode(0, $1, 0); }
 
 %%
 
-int
-yylex()
+void
+yyerror(const char *s)
 {
-	struct {
-		char *s;
-		int t;
-	} kwds[] = {
-		{ "void", TVOID },
-		{ "int", TINT },
-		{ "long", TLNG },
-		{ "if", IF },
-		{ "else", ELSE },
-		{ "for", FOR },
-		{ "while", WHILE },
-		{ "return", RETURN },
-		{ "break", BREAK },
-		{ "sizeof", SIZEOF },
-		{ 0, 0 }
-	};
-	int i, c, c1, n;
-	char v[NString], *p;
-
-	do {
-		c = getchar();
-		if (c == '#')
-			while ((c = getchar()) != '\n')
-				;
-		if (c == '\n')
-			line++;
-	} while (isspace(c));
-
-
-	if (c == EOF)
-		return 0;
-
-
-	if (isdigit(c)) {
-		n = 0;
-		do {
-			n *= 10;
-			n += c-'0';
-			c = getchar();
-		} while (isdigit(c));
-		ungetc(c, stdin);
-		yylval.n = mknode('N', 0, 0);
-		yylval.n->u.n = n;
-		return NUM;
-	}
-
-	if (isalpha(c)) {
-		p = v;
-		do {
-			if (p == &v[NString-1])
-				die("ident too long");
-			*p++ = c;
-			c = getchar();
-		} while (isalpha(c) || c == '_');
-		*p = 0;
-		ungetc(c, stdin);
-		for (i=0; kwds[i].s; i++)
-			if (strcmp(v, kwds[i].s) == 0)
-				return kwds[i].t;
-		yylval.n = mknode('V', 0, 0);
-		strcpy(yylval.n->u.v, v);
-		return IDENT;
-	}
-
-	if (c == '"') {
-		i = 0;
-		n = 32;
-		p = alloc(n);
-		strcpy(p, "{ b \"");
-		for (i=5;; i++) {
-			c = getchar();
-			if (c == EOF)
-				die("unclosed string literal");
-			if (i+8 >= n) {
-				p = memcpy(alloc(n*2), p, n);
-				n *= 2;
-			}
-			p[i] = c;
-			if (c == '"' && p[i-1]!='\\')
-				break;
-		}
-		strcpy(&p[i], "\", b 0 }");
-		if (nglo == NGlo)
-			die("too many globals");
-		ini[nglo] = p;
-		yylval.n = mknode('S', 0, 0);
-		yylval.n->u.n = nglo++;
-		return STR;
-	}
-
-	c1 = getchar();
-#define DI(a, b) a + b*256
-	switch (DI(c,c1)) {
-	case DI('!','='): return NE;
-	case DI('=','='): return EQ;
-	case DI('<','='): return LE;
-	case DI('>','='): return GE;
-	case DI('+','+'): return PP;
-	case DI('-','-'): return MM;
-	case DI('&','&'): return AND;
-	case DI('|','|'): return OR;
-	}
-#undef DI
-	ungetc(c1, stdin);
-
-	return c;
+	die("=> %s", s);
 }
 
 int
-yyerror(char *err)
+main(void)
 {
-	die("parse error");
-	return 0;
-}
-
-int
-main()
-{
-	int i;
-
 	of = stdout;
 	nglo = 1;
+	
 	if (yyparse() != 0)
-		die("parse error");
-	for (i=1; i<nglo; i++)
+		die("=> error: unable to proceed, exiting.");
+	for (int i = 1; i < nglo; i++)
 		fprintf(of, "data $glo%d = %s\n", i, ini[i]);
 	return 0;
 }

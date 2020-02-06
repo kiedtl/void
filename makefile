@@ -2,11 +2,11 @@
 # to silence errors arising from compiling y.tab.c
 
 CC      = gcc
-CFLAGS  = -O0 -Wno-implicit-function-declaration
+CFLAGS  = -Wno-implicit-function-declaration -Wno-int-conversion
 LDFLAGS = -fuse-ld=gold
 
 NAME    = void
-SRC     = lex.c y.tab.c    # generated files
+SRC     = common.c y.tab.c lex.c   # generated files
 OBJ     = $(SRC:.c=.o)
 
 all: $(NAME)
@@ -19,11 +19,8 @@ y.tab.h: y.tab.c
 y.tab.c: yacc.yy
 	yacc -dWno-yacc yacc.yy $(YFLAGS)
 
-lex.c: lex.l y.tab.h
-	flex -o lex.c lex.l
-
 clean:
-	rm -f $(NAME) $(OBJ) $(SRC)
+	rm -f $(NAME) $(OBJ) y.tab.c y.tab.h
 
 test:
 	./void < basic.vd
